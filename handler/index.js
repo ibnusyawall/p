@@ -486,6 +486,58 @@ const MessageHandler = async (client = new Client(), message) => {
                 break;
             default:
                 break
+        case 'stickergif':
+        case 'stikergif':
+            if (isMedia || isQuotedVideo) {
+                if (mimetype === 'video/mp4' && message.duration < 10 || mimetype === 'image/gif' && message.duration < 10) {
+                    var mediaData = await decryptMedia(message, uaOverride)
+                    aruga.reply(from, '[WAIT] Sedang di proses⏳ silahkan tunggu ± 1 min!', id)
+                    var filename = `./media/stickergif.${mimetype.split('/')[1]}`
+                    await fs.writeFileSync(filename, mediaData)
+                    await exec(`gify ${filename} ./media/stickergf.gif --fps=30 --scale=240:240`, async function (error, stdout, stderr) {
+                        var gif = await fs.readFileSync('./media/stickergf.gif', { encoding: "base64" })
+                        await aruga.sendImageAsSticker(from, `data:image/gif;base64,${gif.toString('base64')}`)
+                        .catch(() => {
+                            aruga.reply(from, 'Maaf filenya terlalu besar!', id)
+                        })
+                    })
+                  } else {
+                    aruga.reply(from, `[❗] Kirim gif dengan caption *${prefix}stickergif* max 10 sec!`, id)
+                   }
+                } else {
+		    aruga.reply(from, `[❗] Kirim gif dengan caption *${prefix}stickergif*`, id)
+	        }
+            break
+        case 'stikergiphy':
+        case 'stickergiphy':
+            if (args.length !== 1) return aruga.reply(from, `Maaf, format pesan salah.\nKetik pesan dengan ${prefix}stickergiphy <link_giphy>`, id)
+            const isGiphy = url.match(new RegExp(/https?:\/\/(www\.)?giphy.com/, 'gi'))
+            const isMediaGiphy = url.match(new RegExp(/https?:\/\/media.giphy.com\/media/, 'gi'))
+            if (isGiphy) {
+                const getGiphyCode = url.match(new RegExp(/(\/|\-)(?:.(?!(\/|\-)))+$/, 'gi'))
+                if (!getGiphyCode) { return aruga.reply(from, 'Gagal mengambil kode giphy', id) }
+                const giphyCode = getGiphyCode[0].replace(/[-\/]/gi, '')
+                const smallGifUrl = 'https://media.giphy.com/media/' + giphyCode + '/giphy-downsized.gif'
+                aruga.sendGiphyAsSticker(from, smallGifUrl).then(() => {
+                    aruga.reply(from, 'Here\'s your sticker')
+                    console.log(`Sticker Processed for ${processTime(t, moment())} Second`)
+                }).catch((err) => console.log(err))
+            } else if (isMediaGiphy) {
+                const gifUrl = url.match(new RegExp(/(giphy|source).(gif|mp4)/, 'gi'))
+                if (!gifUrl) { return aruga.reply(from, 'Gagal mengambil kode giphy', id) }
+                const smallGifUrl = url.replace(gifUrl[0], 'giphy-downsized.gif')
+                aruga.sendGiphyAsSticker(from, smallGifUrl)
+                .then(() => {
+                    aruga.reply(from, 'Here\'s your sticker')
+                    console.log(`Sticker Processed for ${processTime(t, moment())} Second`)
+                })
+                .catch(() => {
+                    aruga.reply(from, `Ada yang error!`, id)
+                })
+            } else {
+                await aruga.reply(from, 'Maaf, command sticker giphy hanya bisa menggunakan link dari giphy.  [Giphy Only]', id)
+            }
+            break
 
         }
     } catch (err) {
